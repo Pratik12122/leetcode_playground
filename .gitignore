@@ -1,0 +1,8 @@
+# Ignore all .class files
+echo "*.class" >> .gitignore
+
+# Ignore a specific log directory
+echo "logs/" >> .gitignore
+
+# Ignore all files ending in .tmp
+echo "*.tmp" >> .gitignore
