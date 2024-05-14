@@ -6,9 +6,9 @@ public class NextGreatestLetter {
 	// https://leetcode.com/problems/find-smallest-letter-greater-than-target/description/?envType=study-plan-v2&envId=binary-search
 
 	public static void main(String[] args) {
-		char[] letters = {'c','f','j'};
+		char[] letters = { 'c', 'f', 'j' };
 		char ch = 'j';
-		
+
 		System.out.println(nextGreatestLetter(letters, ch));
 	}
 
@@ -26,7 +26,9 @@ public class NextGreatestLetter {
 			}
 		}
 
-		return left == letters.length ? letters[0] : letters[left];
+		// return left == letters.length ? letters[0] : letters[left];
+
+		return letters[left % letters.length];
 	}
 
 }

@@ -8,7 +8,7 @@ public class SearchRange {
 	// https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/description/
 
 	public static void main(String[] args) {
-		int[] nums = { 1 };
+		int[] nums = { 2,2};
 		int target = 1;
 
 		System.out.println(Arrays.toString(new SearchRange().searchRange(nums, target)));
