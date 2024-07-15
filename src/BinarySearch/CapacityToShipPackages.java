@@ -12,7 +12,7 @@ public class CapacityToShipPackages {
 	}
 
 	public static int shipWithinDays(int[] weights, int days) {
-		int low = Arrays.stream(weights).max().getAsInt();  //O(n)
+		int low = Arrays.stream(weights).max().getAsInt(); // O(n)
 		int high = Arrays.stream(weights).sum(); // O(n)
 
 		while (low < high) {
