@@ -1,6 +1,7 @@
 package sliding_window;
 
 import java.util.Arrays;
+import java.util.PriorityQueue;
 
 public class MaxFrequency {
 
@@ -14,10 +15,10 @@ public class MaxFrequency {
 				9920, 9972, 9983, 9973, 9917, 9995, 9973, 9977, 9947, 9936, 9975, 9954, 9932, 9964, 9972, 9935, 9946,
 				9966 };
 		
-		int[] nums1 = {1,1,100000};
-		int k = 1;
+		int[] nums1 = {3,9,6};
+		int k = 2;
 
-		System.out.println(obj.maxFrequency(nums1, k));
+		System.out.println(obj.maxFrequency1(nums1, k));
 	}
 
 	public int maxFrequency(int[] nums, int k) {
@@ -41,5 +42,29 @@ public class MaxFrequency {
 		}
 
 		return maxFrq;
+	}
+	
+	
+	public static int maxFrequency1(int[] nums, int k) {
+		int start = 0;
+		int windowSum = 0;
+		PriorityQueue<Integer> maxHeap = new PriorityQueue<Integer>((a, b) -> Integer.compare(b, a));
+
+		int maxSize = 1;
+
+		for (int end = 0; end < nums.length; end++) {
+			windowSum += nums[end];
+			maxHeap.offer(nums[end]);
+			int total = ((end - start) + 1) * maxHeap.peek();
+
+			while (total > windowSum + k) {
+				windowSum -= nums[start];
+				maxHeap.remove(nums[start++]);
+				total = (end - start) + 1 * maxHeap.peek();
+			}
+			maxSize = Math.max(maxSize, end - start + 1);
+		}
+
+		return maxSize;
 	}
 }
