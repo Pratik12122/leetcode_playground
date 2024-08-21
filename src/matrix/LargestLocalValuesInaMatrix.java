@@ -18,8 +18,6 @@ public class LargestLocalValuesInaMatrix {
 				}
 			}
 		}
-		
-		
 		return result;
 	}
 }

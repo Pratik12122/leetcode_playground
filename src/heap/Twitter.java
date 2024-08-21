@@ -1,140 +1,170 @@
 package heap;
 
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Set;
-
-
-class Node {
-	private Integer tweetId;
-	private Long timestamp;
-	
-	public Node(Integer tweetId, Long timestamp) {
-		super();
-		this.tweetId = tweetId;
-		this.timestamp = timestamp;
-	}
-
-	public Integer getTweetId() {
-		return tweetId;
-	}
-
-	public void setTweetId(Integer tweetId) {
-		this.tweetId = tweetId;
-	}
-
-	public Long getTimestamp() {
-		return timestamp;
-	}
-
-	public void setTimestamp(Long timestamp) {
-		this.timestamp = timestamp;
-	}
-	
-	
-}
+import java.util.stream.Collectors;
 
 class Twitter {
 
-	public static void main(String[] args) {
-		Twitter twitter = new Twitter();
-		twitter.postTweet(2, 5);
-		twitter.follow(1, 2);
-		twitter.follow(1, 2);
-		//twitter.postTweet(1, 6);
-		System.out.println(twitter.getNewsFeed(1));
-		//System.out.println(twitter.getNewsFeed(1));
-		//twitter.unfollow(1, 5);
-		//System.out.println(twitter.getNewsFeed(1));
-	}
-	
-	private long timestamp = 0;
-	private Map<Integer, Set<Integer>> userFollowersMap;
-	private Map<Integer, LinkedList<Node>> userTweets;
+	int time = 1;
+	Map<Integer, Set<Integer>> followerMap;
+	Map<Integer, LinkedList<tweet>> tweetsMap;
 
 	public Twitter() {
-		userFollowersMap = new HashMap<>();
-		userTweets = new HashMap<>();
+		followerMap = new HashMap<>();
+		tweetsMap = new HashMap<>();
 	}
 
 	public void postTweet(int userId, int tweetId) {
-		userTweets.computeIfPresent(userId, (key, tweetQueue) -> {
-			tweetQueue.add(new Node(tweetId, timestamp++));
-			return tweetQueue;
-		});
-
-		userTweets.computeIfAbsent(userId, key -> {
-			var tweets = new LinkedList<Node>();
-			tweets.add(new Node(tweetId, timestamp++));
-			follow(userId, userId);
-			return tweets;
-		});
+		if (tweetsMap.containsKey(userId)) {
+			LinkedList<tweet> ll = tweetsMap.get(userId);
+			ll.addFirst(new tweet(time++, tweetId));
+			tweetsMap.put(userId, ll);
+		} else {
+			LinkedList<tweet> ll = new LinkedList<tweet>();
+			ll.addFirst(new tweet(time++, tweetId));
+			tweetsMap.put(userId, ll);
+		}
 	}
 
 	public List<Integer> getNewsFeed(int userId) {
-		var recentTweets = new ArrayList<Integer>();
-		if (userFollowersMap.containsKey(userId)) {
-			var minHeap = new PriorityQueue<Node>((a, b) -> Long.compare(b.getTimestamp(), a.getTimestamp()));
+		// get user tweets
+		List<tweet> userTweets = new ArrayList<>();
+		if (tweetsMap.containsKey(userId)) {
+			userTweets.addAll(tweetsMap.get(userId));
+		}
 
-			for (Integer followerId : userFollowersMap.get(userId)) {
-				List<Node> top10TweetsByUser = findTop10TweetsByUser(followerId);
-				minHeap.addAll(top10TweetsByUser);
+		if (followerMap.containsKey(userId)) {
+			for (int follower : followerMap.get(userId)) {
+				System.out.println(follower);
+				if (tweetsMap.containsKey(follower)) {
+					userTweets.addAll(tweetsMap.get(follower));
+				}
+
 			}
+		}
 
-			while (minHeap.size() > 10) {
+		PriorityQueue<tweet> minHeap = new PriorityQueue<tweet>((a, b) -> a.time - b.time);
+
+		// build minHeap
+
+		for (tweet t : userTweets) {
+			minHeap.add(t);
+			if (minHeap.size() > 10) {
 				minHeap.poll();
 			}
-
-			while (!minHeap.isEmpty()) {
-				recentTweets.add(minHeap.poll().getTweetId());
-			}
-
 		}
-		return recentTweets;
+
+		List<Integer> res = new ArrayList<>();
+		
+		for(int n=0; n < minHeap.size(); n++) {
+			res.add(0);
+		}
+
+		int index = minHeap.size() -1;
+		
+		while (!minHeap.isEmpty()) {
+			res.set(index, minHeap.poll().tweetId);
+			index--;
+		}
+
+		return res;
+
 	}
 
 	public void follow(int followerId, int followeeId) {
-		if (userFollowersMap.containsKey(followerId)) {
-			var followers = userFollowersMap.get(followerId);
-			followers.add(followeeId);
-		} else {
-			var followers = new HashSet<Integer>();
-			followers.add(followeeId);
-			userFollowersMap.put(followerId, followers);
+		followerMap.computeIfPresent(followerId, (k, v) -> {
+			v.add(followeeId);
+			return v;
+		});
+
+		if (!followerMap.containsKey(followerId)) {
+			HashSet<Integer> set = new HashSet<Integer>();
+			set.add(followeeId);
+			followerMap.put(followerId, set);
 		}
+
 	}
 
 	public void unfollow(int followerId, int followeeId) {
-		userFollowersMap.computeIfPresent(followerId, (key, value) -> {
-			value.remove(Integer.valueOf(followeeId));
-			return value;
+		followerMap.computeIfPresent(followerId, (k, v) -> {
+			v.remove(followeeId);
+			return v;
 		});
 	}
 
-	private List<Node> findTop10TweetsByUser(int userId) {
-		int count = 0;
-		var resultList = new ArrayList<Node>();
-		if (userTweets.containsKey(userId)) {
-			for (Node tweetNode : userTweets.get(userId)) {
-				if (count >= 10) {
-					break;
-				}
-				resultList.add(tweetNode);
-				count++;
+	public static void main(String[] args) {
+		Twitter obj = new Twitter();
+		List<int[]> listofArrays = Arrays.asList(new int[] { 1, 5 }, new int[] { 2, 3 }, new int[] { 1, 101 },
+				new int[] { 2, 13 }, new int[] { 2, 10 }, new int[] { 1, 2 }, new int[] { 1, 94 }, new int[] { 2, 505 },
+				new int[] { 1, 333 }, new int[] { 2, 22 }, new int[] { 1, 11 }, new int[] { 1, 205 },
+				new int[] { 2, 203 }, new int[] { 1, 201 }, new int[] { 2, 213 }, new int[] { 1, 200 },
+				new int[] { 2, 202 }, new int[] { 1, 204 }, new int[] { 2, 208 }, new int[] { 2, 233 },
+				new int[] { 1, 222 }, new int[] { 2, 211 }, new int[] { 1 }, new int[] { 1, 2, 3 }, new int[] { 1 },
+				new int[] { 1, 2, 3,4 }, new int[] { 1 });
+
+		for (int[] arr : listofArrays) {
+			if (arr.length == 2) {
+				obj.postTweet(arr[0], arr[1]);
+			} else if (arr.length == 3) {
+				obj.follow(arr[0], arr[1]);
+			} else if (arr.length == 4) {
+				obj.unfollow(arr[0], arr[1]);
+			} else {
+				System.out.println("[");
+				String res = obj.getNewsFeed(arr[0]).stream().map(String::valueOf).collect(Collectors.joining(", "));
+				System.out.println(res);
+				System.out.println("]");
 			}
 		}
 
-		return resultList;
 	}
 
 }
 
+
+class tweet {
+    public int tweetId;
+    public int time;
+
+    tweet(int time, int tweetId) {
+        this.time = time;
+        this.tweetId = tweetId;
+    }
+
+	@Override
+	public String toString() {
+		return "tweet [tweetId=" + tweetId + ", time=" + time + "]";
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(time, tweetId);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		tweet other = (tweet) obj;
+		return time == other.time && tweetId == other.tweetId;
+	}
+	
+	
+    
+}
 /**
  * Your Twitter object will be instantiated and called as such: Twitter obj =
  * new Twitter(); obj.postTweet(userId,tweetId); List<Integer> param_2 =
